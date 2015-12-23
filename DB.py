@@ -24,16 +24,22 @@ def logger(fn):
 def transaction(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        ins = Core.instance()
-        try:
-            result = fn(*args, **kwargs)
-        except Exception as e:
-            ins.rollback()
-            raise e
-        ins.commit()
+        with _TransactionCtx():
+            return fn(*args, *args, **kwargs)
         return result
 
     return wrapper
+
+
+class _TransactionCtx(object):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exctype, excvalue, traceback):
+        if exctype is None:
+            self.commit()
+        else:
+            self.rollback()
 
 
 class Dict(dict):

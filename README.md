@@ -1,6 +1,6 @@
 # EasyORM
 
-The EasyORM Database Object Relationship Mapping Tools allows you manipulate objects without using SQL like the following Examples.
+The EasyORM Database Object Relationship Mapping Framework allows you manipulate objects without using SQL
 
     class Person(Model):
         id = Field("id", pk=True)
@@ -18,4 +18,13 @@ The EasyORM Database Object Relationship Mapping Tools allows you manipulate obj
     Person.select(passwd="WhatTheFuck")
     Person.delete(u)
             
+            
+And manage transactions using decorator
+
+    @transaction
+    def rename(person, new_name):
+        person.name = new_name
+        person.update()
+    
+    
 More Features are comming...
