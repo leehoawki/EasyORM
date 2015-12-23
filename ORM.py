@@ -1,3 +1,6 @@
+import DB
+
+
 class Field(object):
     def __init__(self, name, pk=False):
         self.name = name
@@ -11,10 +14,10 @@ class Field(object):
         return s
 
 
-class ORM(type):
+class Meta(type):
     def __new__(cls, name, bases, attrs):
         if name == 'Model':
-            return super(ORM, cls).__new__(cls, name, bases, attrs)
+            return super(Meta, cls).__new__(cls, name, bases, attrs)
 
         mappings = {}
         fields = []
@@ -40,14 +43,14 @@ class ORM(type):
         attrs['__insert_sql__'] = 'insert into %s (%s) values (%s)' % (
             name, ','.join(fields), ','.join(['?'] * len(fields)))
         attrs['__update_sql__'] = 'update %s set %s  where %s = %s' % (
-            name, ' and '.join('%s = ?' % x for x in fields if x != pk.name), pk.name, '?')
+            name, ','.join('%s = ?' % x for x in fields if x != pk.name), pk.name, '?')
         attrs['__delete_sql__'] = 'delete from %s where %s = %s' % (name, pk.name, '?')
         attrs['__select_one_sql__'] = 'select %s from %s where %s = %s' % (",".join(fields), name, pk.name, '?')
-        return super(ORM, cls).__new__(cls, name, bases, attrs)
+        return super(Meta, cls).__new__(cls, name, bases, attrs)
 
 
 class Model(dict):
-    __metaclass__ = ORM
+    __metaclass__ = Meta
 
     def __init__(self, *args, **kwargs):
         super(Model, self).__init__(*args, **kwargs)
@@ -61,24 +64,32 @@ class Model(dict):
     def __setattr__(self, key, value):
         self[key] = value
 
-    def insert(self):
+    def attributes(self):
         args = []
         for k, v in self.__mappings__.items():
             args.append(self.__getattr__(k))
-        print self.__insert_sql__
+        return args
+
+    def insert(self):
+        DB.Core.instance().execute(self.__insert_sql__, self.attributes())
 
     def update(self):
-        print self.__update_sql__
+        import logging
+        logging.warn(self.__update_sql__)
+        logging.warn(self.attributes())
+        DB.Core.instance().execute(self.__update_sql__, self.attributes())
 
     def delete(self):
-        print self.__delete_sql__
+        DB.Core.instance().execute(self.__delete_sql__, [self.get(self.__pk__.name)])
 
     @classmethod
     def select(cls, **kwargs):
         sql = 'select %s from %s where %s' % (
-            ",".join(cls.__fields__), cls.__table__, ' and '.join('%s = ?' % x for x in kwargs))
-        print sql
+            ",".join(cls.__fields__), cls.__table__, ' and '.join("%s = '%s'" % (x, y) for x, y in kwargs.items()))
+        rs = DB.Core.instance().execute_query(sql)
+        return [cls(**d) for d in rs]
 
     @classmethod
     def select_one(cls, val):
-        print cls.__select_one_sql__
+        r = DB.Core.instance().execute_query_one(cls.__select_one_sql__, [val])
+        return cls(**r) if r else None

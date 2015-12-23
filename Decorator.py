@@ -15,6 +15,7 @@ def logger(fn):
         logging.debug("    return    = {0}".format(result))
         logging.debug("    time      = %.6f sec" % (te - ts))
         logging.debug("    called_from_line : " + str(inspect.currentframe().f_back.f_lineno))
+        return result
 
     return wrapper
 
