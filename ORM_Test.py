@@ -29,7 +29,6 @@ class ORMTest(unittest.TestCase):
         u.insert()
         assert len(Person.select(id=12345)) == 1
         assert Person.select_one(12345) == u
-
         u.passwd = "WhatTheFuck"
         u.update()
         assert len(Person.select(passwd="WhatTheFuck")) == 1

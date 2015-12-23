@@ -7,9 +7,9 @@ class Field(object):
         self.pk = pk
 
     def __str__(self):
-        s = '<%s:%s:' % (self.__class__.__name__, self.name)
+        s = '<%s:%s' % (self.__class__.__name__, self.name)
         if self.pk:
-            s += 'Primary Key'
+            s += ':Primary Key'
         s += '>'
         return s
 
