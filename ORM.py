@@ -86,10 +86,10 @@ class Model(dict):
     def select(cls, **kwargs):
         sql = 'select %s from %s where %s' % (
             ",".join(cls.__fields__), cls.__table__, ' and '.join("%s = '%s'" % (x, y) for x, y in kwargs.items()))
-        rs = DB.Core.instance().execute_query(sql)
+        rs = DB.Core.instance().execute(sql, query=True)
         return [cls(**d) for d in rs]
 
     @classmethod
     def select_one(cls, val):
-        r = DB.Core.instance().execute_query_one(cls.__select_one_sql__, [val])
+        r = DB.Core.instance().execute(cls.__select_one_sql__, [val], query=True, one=True)
         return cls(**r) if r else None

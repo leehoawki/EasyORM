@@ -44,34 +44,19 @@ class Core(object):
         self.conn.rollback()
 
     @logger
-    def execute(self, sql, args=[]):
+    def execute(self, sql, args=[], one=False, query=False):
         try:
             c = self.conn.cursor()
             c.execute(sql, args)
-        finally:
-            c.close()
-
-    @logger
-    def execute_query(self, sql, args=[]):
-        try:
-            c = self.conn.cursor()
-            c.execute(sql, args)
+            if not query:
+                return
             if c.description:
                 names = [x[0] for x in c.description]
+                if one:
+                    values = c.fetchone()
+                    if not values:
+                        return None
+                    return Dict(names, values)
                 return [Dict(names, x) for x in c.fetchall()]
-        finally:
-            c.close()
-
-    @logger
-    def execute_query_one(self, sql, args=[]):
-        try:
-            c = self.conn.cursor()
-            c.execute(sql, args)
-            if c.description:
-                names = [x[0] for x in c.description]
-            values = c.fetchone()
-            if not values:
-                return None
-            return Dict(names, values)
         finally:
             c.close()
