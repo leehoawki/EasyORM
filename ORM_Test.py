@@ -14,13 +14,16 @@ class Person(Model):
 class ORMTest(unittest.TestCase):
     def setUp(self):
         logging.basicConfig(level=logging.DEBUG)
-        DB.Core.init('test')
-        DB.Core.instance().execute('drop table if exists Person')
-        DB.Core.instance().execute('create table Person (id int primary key, name text, email text, passwd text)')
+        DB.Core.init(database='sqlite3', path='test.db')
+        ins = DB.Core.instance()
+        ins.execute('drop table if exists Person')
+        ins.execute('create table Person (id int primary key, name text, email text, passwd text)')
 
     def tearDown(self):
-        DB.Core.instance().execute('drop table if exists Person')
-        DB.Core.instance().close()
+        ins = DB.Core.instance()
+        ins.execute('drop table if exists Person')
+        ins.close()
+        DB.Core.destroy()
 
     def test_person(self):
         assert len(Person.select(id=12345)) == 0

@@ -1,4 +1,5 @@
 import sqlite3
+import mysql.connector
 import inspect
 import time
 import logging
@@ -25,7 +26,7 @@ def transaction(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         with _TransactionCtx():
-            return fn(*args, *args, **kwargs)
+            return fn(*args, **kwargs)
         return result
 
     return wrapper
@@ -36,10 +37,11 @@ class _TransactionCtx(object):
         return self
 
     def __exit__(self, exctype, excvalue, traceback):
+        ins = Core.instance()
         if exctype is None:
-            self.commit()
+            ins.commit()
         else:
-            self.rollback()
+            ins.rollback()
 
 
 class Dict(dict):
@@ -69,10 +71,28 @@ class Core(object):
         return cls._instance
 
     @classmethod
-    def init(cls, path):
+    def init(cls, **kwargs):
         if hasattr(Core, "_instance"):
             raise Exception("DB can only not initialized once.")
-        cls._instance = Core(sqlite3.connect(path))
+        database = kwargs.get("database")
+        if database == "sqlite3":
+            path = kwargs.get("path")
+            cls._instance = Core(sqlite3.connect(path))
+        elif database == "mysql":
+            host = kwargs.get("host")
+            port = kwargs.get("port")
+            username = kwargs.get("username")
+            password = kwargs.get("password")
+            dbname = kwargs.get("dbname")
+            cls._instance = Core(
+                mysql.connector.connect(user=username, password=password, database=dbname, host=host, port=port))
+        else:
+            raise Exception("Unsupported database Type : " + database + ".")
+
+    @classmethod
+    def destroy(cls):
+        cls._instance.close()
+        delattr(cls, "_instance")
 
     def close(self):
         self.conn.close()
