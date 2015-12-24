@@ -104,12 +104,10 @@ class Core(object):
         self.conn.rollback()
 
     @logger
-    def execute(self, sql, args=[], one=False, query=False):
+    def execute(self, sql, args=[], one=False):
         try:
             c = self.conn.cursor()
             c.execute(sql, args)
-            if not query:
-                return
             if c.description:
                 names = [x[0] for x in c.description]
                 if one:

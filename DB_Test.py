@@ -29,8 +29,8 @@ class DBTest(unittest.TestCase):
         except:
             ex = True
         assert ex == True
-        assert len(ins.execute("select * from test where id = 1", query=True)) == 1
-        assert len(ins.execute("select * from test where id = 2", query=True)) == 0
+        assert len(ins.execute("select * from test where id = 1")) == 1
+        assert len(ins.execute("select * from test where id = 2")) == 0
 
         ins.execute("drop table if exists test")
         ins.close()
@@ -48,7 +48,7 @@ class DBTest(unittest.TestCase):
         Core.destroy()
 
     def test_mysql(self):
-        Core.init(database="mysql", host="127.0.0.1", username="test", password="test", port=3306)
+        Core.init(database="mysql", host="192.168.1.115", username="root", password="toor", dbname='test', port=3306)
         ins = Core.instance()
         ins.execute("select 1 + 1 ")
         ins.execute("drop table if exists test")
