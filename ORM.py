@@ -74,10 +74,6 @@ class Model(dict):
         DB.Core.instance().execute(self.__insert_sql__, self.attributes())
 
     def update(self):
-        import logging
-
-        logging.warn(self.__update_sql__)
-        logging.warn(self.attributes())
         DB.Core.instance().execute(self.__update_sql__, self.attributes())
 
     def delete(self):
@@ -86,8 +82,9 @@ class Model(dict):
     @classmethod
     def select(cls, **kwargs):
         sql = 'select %s from %s where %s' % (
-            ",".join(cls.__fields__), cls.__table__, ' and '.join("%s = '%s'" % (x, y) for x, y in kwargs.items()))
-        rs = DB.Core.instance().execute(sql)
+            ",".join(cls.__fields__), cls.__table__, ' and '.join("%s = ?" % (x) for x, y in kwargs.items()))
+        args = [y for x, y in kwargs.items()]
+        rs = DB.Core.instance().execute(sql, args)
         return [cls(**d) for d in rs]
 
     @classmethod
