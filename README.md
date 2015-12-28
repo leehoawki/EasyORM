@@ -1,6 +1,6 @@
 # EasyORM
 
-The EasyORM Database Object Relationship Mapping Framework allows you manipulate objects without using SQL and manage transactions using decorator,
+The EasyORM Database Object Relationship Mapping Framework allows you to manipulate objects without using SQL and manage transactions using decorator,
 
     class Person(Model):
         id = Field("id", pk=True)
