@@ -15,7 +15,7 @@ The EasyORM Database Object Relationship Mapping Framework allows you manipulate
     def test():
         Person.select(id=12345))
         Person.select_one(12345)
-        u = Person(id=12345, name='Michael', email='test@orm.org', passwd='my-pwd')
+        u = Person(id=12345, name='Mr.Test', email='test@test.org', passwd='test_password')
         u.insert()
         u.passwd = "WhatTheFuck"
         u.update()
