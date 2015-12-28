@@ -3,6 +3,7 @@ import mysql.connector
 import inspect
 import time
 import logging
+import threading
 from functools import wraps
 
 
@@ -34,14 +35,24 @@ def transaction(fn):
 
 class _TransactionCtx(object):
     def __enter__(self):
+        global core
+        self.adhoc = False
+        if core.connection is None:
+            core.connection = get_connection()
+            self.adhoc = True
         return self
 
     def __exit__(self, exctype, excvalue, traceback):
-        ins = Core.instance()
-        if exctype is None:
-            ins.commit()
-        else:
-            ins.rollback()
+        conn = core.connection
+        try:
+            if exctype is None:
+                conn.commit()
+            else:
+                conn.rollback()
+        finally:
+            if self.adhoc:
+                core.connection = None
+                conn.close()
 
 
 class Dict(dict):
@@ -60,61 +71,85 @@ class Dict(dict):
         self[key] = value
 
 
-class Core(object):
+class Connection(object):
     def __init__(self, conn):
         self.conn = conn
 
-    @classmethod
-    def instance(cls):
-        if not hasattr(Core, "_instance"):
-            raise Exception("DB needs to get initialized first.")
-        return cls._instance
-
-    @classmethod
-    def init(cls, **kwargs):
-        if hasattr(Core, "_instance"):
-            raise Exception("DB can only not initialized once.")
-        database = kwargs.get("database")
-        if database == "sqlite3":
-            path = kwargs.get("path")
-            cls._instance = Core(sqlite3.connect(path))
-        elif database == "mysql":
-            host = kwargs.get("host")
-            port = kwargs.get("port")
-            username = kwargs.get("username")
-            password = kwargs.get("password")
-            dbname = kwargs.get("dbname")
-            cls._instance = Core(
-                mysql.connector.connect(user=username, password=password, database=dbname, host=host, port=port))
-        else:
-            raise Exception("Unsupported database Type : " + database + ".")
-
-    @classmethod
-    def destroy(cls):
-        cls._instance.close()
-        delattr(cls, "_instance")
-
-    def close(self):
-        self.conn.close()
-
     def commit(self):
-        self.conn.commit()
+        return self.conn.commit()
 
     def rollback(self):
-        self.conn.rollback()
+        return self.conn.rollback()
 
-    @logger
-    def execute(self, sql, args=[], one=False):
-        try:
-            c = self.conn.cursor()
-            c.execute(sql, args)
-            if c.description:
-                names = [x[0] for x in c.description]
-                if one:
-                    values = c.fetchone()
-                    if not values:
-                        return None
-                    return Dict(names, values)
-                return [Dict(names, x) for x in c.fetchall()]
-        finally:
-            c.close()
+    def cursor(self):
+        return self.conn.cursor()
+
+    def close(self):
+        return self.conn.close()
+
+
+def get_connection():
+    global connector
+    if connector is None:
+        raise Exception("DB needs to get initialized first.")
+    return Connection(connector())
+
+
+def init(**kwargs):
+    global connector
+    if connector is not None:
+        raise Exception("DB can only not initialized once.")
+    database = kwargs.get("database")
+    if database == "sqlite3":
+        path = kwargs.get("path")
+        connector = lambda: sqlite3.connect(path)
+    elif database == "mysql":
+        host = kwargs.get("host")
+        port = kwargs.get("port")
+        username = kwargs.get("username")
+        password = kwargs.get("password")
+        dbname = kwargs.get("dbname")
+        connector = lambda: mysql.connector.connect(user=username, password=password, database=dbname, host=host,
+                                                    port=port)
+    else:
+        raise Exception("Unsupported database Type : " + database + ".")
+
+
+def destroy():
+    global connector
+    connector = None
+
+
+@logger
+def execute(sql, args=[], one=False):
+    global core
+    adhoc = False
+    if core.connection is None:
+        core.connection = get_connection()
+        adhoc = True
+    conn = core.connection
+    c = conn.cursor()
+    try:
+        c.execute(sql, args)
+        if c.description:
+            names = [x[0] for x in c.description]
+            if one:
+                values = c.fetchone()
+                if not values:
+                    return None
+                return Dict(names, values)
+            return [Dict(names, x) for x in c.fetchall()]
+    finally:
+        c.close()
+        if adhoc:
+            core.connection = None
+            conn.close()
+
+
+class Core(threading.local):
+    def __init__(self):
+        self.connection = None
+
+
+connector = None
+core = Core()

@@ -3,6 +3,8 @@ import DB
 
 class Field(object):
     def __init__(self, name, pk=False):
+        if not name:
+            raise Exception("Empty field name is not allowed.")
         self.name = name
         self.pk = pk
 
@@ -71,23 +73,23 @@ class Model(dict):
         return args
 
     def insert(self):
-        DB.Core.instance().execute(self.__insert_sql__, self.attributes())
+        DB.execute(self.__insert_sql__, self.attributes())
 
     def update(self):
-        DB.Core.instance().execute(self.__update_sql__, self.attributes())
+        DB.execute(self.__update_sql__, self.attributes())
 
     def delete(self):
-        DB.Core.instance().execute(self.__delete_sql__, [self.get(self.__pk__.name)])
+        DB.execute(self.__delete_sql__, [self.get(self.__pk__.name)])
 
     @classmethod
     def select(cls, **kwargs):
         sql = 'select %s from %s where %s' % (
-            ",".join(cls.__fields__), cls.__table__, ' and '.join("%s = ?" % (x) for x, y in kwargs.items()))
+            ",".join(cls.__fields__), cls.__table__, ' and '.join("%s = ?" % x for x, y in kwargs.items()))
         args = [y for x, y in kwargs.items()]
-        rs = DB.Core.instance().execute(sql, args)
+        rs = DB.execute(sql, args)
         return [cls(**d) for d in rs]
 
     @classmethod
     def select_one(cls, val):
-        r = DB.Core.instance().execute(cls.__select_one_sql__, [val], one=True)
+        r = DB.execute(cls.__select_one_sql__, [val], one=True)
         return cls(**r) if r else None

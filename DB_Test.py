@@ -1,4 +1,4 @@
-from DB import *
+import DB
 import logging
 import unittest
 
@@ -8,55 +8,51 @@ class DBTest(unittest.TestCase):
         logging.basicConfig(level=logging.DEBUG)
 
     def test_transaction(self):
-        Core.init(database="sqlite3", path="test.db")
-        ins = Core.instance()
-        ins.execute("drop table if exists test")
-        ins.execute("create table test (id int)")
+        DB.init(database="sqlite3", path="test.db")
+        DB.execute("drop table if exists test")
+        DB.execute("create table test (id int)")
 
-        @transaction
-        def test_commit(ins):
-            ins.execute("insert into test values (1)")
+        @DB.transaction
+        def test_commit():
+            DB.execute("insert into test values (1)")
 
-        @transaction
-        def test_rollback(ins):
-            ins.execute("insert into test values (2)")
+        @DB.transaction
+        def test_rollback():
+            DB.execute("insert into test values (2)")
             raise Exception("Transaction Rollback")
 
-        test_commit(ins)
+        test_commit()
         ex = False
         try:
-            test_rollback(ins)
+            test_rollback()
         except:
             ex = True
         assert ex == True
-        assert len(ins.execute("select * from test where id = 1")) == 1
-        assert len(ins.execute("select * from test where id = 2")) == 0
+        assert len(DB.execute("select * from test where id = 1")) == 1
+        assert len(DB.execute("select * from test where id = 2")) == 0
 
-        ins.execute("drop table if exists test")
-        ins.close()
-        Core.destroy()
+        DB.execute("drop table if exists test")
+        DB.destroy()
 
     def test_sqlite3(self):
-        Core.init(database="sqlite3", path="test.db")
-        ins = Core.instance()
-        ins.execute("select 1 + 1 ")
-        ins.execute("drop table if exists test")
-        ins.execute("create table test (id int)")
-        ins.execute("insert into test values (1)")
-        ins.execute("select * from test")
-        ins.execute("drop table if exists test")
-        Core.destroy()
+        DB.init(database="sqlite3", path="test.db")
+        DB.execute("select 1 + 1 ")
+        DB.execute("drop table if exists test")
+        DB.execute("create table test (id int)")
+        DB.execute("insert into test values (1)")
+        DB.execute("select * from test")
+        DB.execute("drop table if exists test")
+        DB.destroy()
 
     def test_mysql(self):
-        Core.init(database="mysql", host="192.168.1.115", username="root", password="toor", dbname='test', port=3306)
-        ins = Core.instance()
-        ins.execute("select 1 + 1 ")
-        ins.execute("drop table if exists test")
-        ins.execute("create table test (id int)")
-        ins.execute("insert into test values (1)")
-        ins.execute("select * from test")
-        ins.execute("drop table if exists test")
-        Core.destroy()
+        DB.init(database="mysql", host="192.168.1.115", username="root", password="toor", dbname='test', port=3306)
+        DB.execute("select 1 + 1 ")
+        DB.execute("drop table if exists test")
+        DB.execute("create table test (id int)")
+        DB.execute("insert into test values (1)")
+        DB.execute("select * from test")
+        DB.execute("drop table if exists test")
+        DB.destroy()
 
 
 if __name__ == '__main__':
