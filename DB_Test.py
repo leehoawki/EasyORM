@@ -39,7 +39,6 @@ class DBTest(unittest.TestCase):
         DB.execute("select 1 + 1 ")
         DB.execute("drop table if exists test")
         DB.execute("create table test (id int)")
-        DB.execute("insert into test values (1)")
         DB.execute("select * from test")
         DB.execute("drop table if exists test")
         DB.destroy()
@@ -49,10 +48,17 @@ class DBTest(unittest.TestCase):
         DB.execute("select 1 + 1 ")
         DB.execute("drop table if exists test")
         DB.execute("create table test (id int)")
-        DB.execute("insert into test values (1)")
         DB.execute("select * from test")
         DB.execute("drop table if exists test")
         DB.destroy()
+
+    def test_pool(self):
+        DB.init(database="mysql", host="192.168.1.115", username="root", password="toor", dbname='test', port=3306)
+        assert len(DB.pool.queue) == 3
+        conn = DB.get_connection()
+        assert len(DB.pool.queue) == 2
+        conn.close()
+        assert len(DB.pool.queue) == 3
 
 
 if __name__ == '__main__':

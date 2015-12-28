@@ -76,48 +76,50 @@ class Connection(object):
         self.conn = conn
 
     def commit(self):
-        return self.conn.commit()
+        self.conn.commit()
 
     def rollback(self):
-        return self.conn.rollback()
+        self.conn.rollback()
 
     def cursor(self):
         return self.conn.cursor()
 
     def close(self):
-        return self.conn.close()
+        global pool
+        pool.recycle(self.conn)
 
 
 def get_connection():
-    global connector
-    if connector is None:
+    global pool
+    if pool is None:
         raise Exception("DB needs to get initialized first.")
-    return Connection(connector())
+    return pool.get_connection()
 
 
 def init(**kwargs):
-    global connector
-    if connector is not None:
+    global pool
+    if pool is not None:
         raise Exception("DB can only not initialized once.")
     database = kwargs.get("database")
     if database == "sqlite3":
         path = kwargs.get("path")
-        connector = lambda: sqlite3.connect(path)
+        pool = Pool(lambda: Connection(sqlite3.connect(path)))
     elif database == "mysql":
         host = kwargs.get("host")
         port = kwargs.get("port")
         username = kwargs.get("username")
         password = kwargs.get("password")
         dbname = kwargs.get("dbname")
-        connector = lambda: mysql.connector.connect(user=username, password=password, database=dbname, host=host,
-                                                    port=port)
+        pool = Pool(lambda: Connection(
+            mysql.connector.connect(user=username, password=password, database=dbname, host=host, port=port)))
     else:
         raise Exception("Unsupported database Type : " + database + ".")
 
 
 def destroy():
-    global connector
-    connector = None
+    global pool
+    pool.destroy()
+    pool = None
 
 
 @logger
@@ -151,5 +153,37 @@ class Core(threading.local):
         self.connection = None
 
 
-connector = None
+class Pool(object):
+    def __init__(self, connector, number=3):
+        self.queue = []
+        self.lock = threading.Lock()
+        self.connector = connector
+        self.number = number
+        for i in range(0, number):
+            self.queue.append(self.connector())
+
+    def destroy(self):
+        for c in self.queue:
+            c.close()
+
+    def get_connection(self):
+        self.lock.acquire()
+        conn = None
+        if self.queue:
+            conn = self.queue.pop()
+        else:
+            conn = self.connector()
+        self.lock.release()
+        return conn
+
+    def recycle(self, conn):
+        self.lock.acquire()
+        if len(self.queue) > self.number:
+            conn.close()
+        else:
+            self.queue.append(conn)
+        self.lock.release()
+
+
 core = Core()
+pool = None
