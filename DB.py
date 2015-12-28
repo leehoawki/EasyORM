@@ -36,10 +36,10 @@ def transaction(fn):
 class _TransactionCtx(object):
     def __enter__(self):
         global core
-        self.adhoc = False
+        self.temp = False
         if core.connection is None:
             core.connection = get_connection()
-            self.adhoc = True
+            self.temp = True
         return self
 
     def __exit__(self, exctype, excvalue, traceback):
@@ -50,7 +50,7 @@ class _TransactionCtx(object):
             else:
                 conn.rollback()
         finally:
-            if self.adhoc:
+            if self.temp:
                 core.connection = None
                 conn.close()
 
@@ -123,10 +123,10 @@ def destroy():
 @logger
 def execute(sql, args=[], one=False):
     global core
-    adhoc = False
+    temp = False
     if core.connection is None:
         core.connection = get_connection()
-        adhoc = True
+        temp = True
     conn = core.connection
     c = conn.cursor()
     try:
@@ -141,7 +141,7 @@ def execute(sql, args=[], one=False):
             return [Dict(names, x) for x in c.fetchall()]
     finally:
         c.close()
-        if adhoc:
+        if temp:
             core.connection = None
             conn.close()
 

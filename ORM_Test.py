@@ -38,6 +38,7 @@ class ORMTest(unittest.TestCase):
 
         Person.delete(u)
         assert len(Person.select(id=12345)) == 0
+        assert len(Person.select()) == 0
         assert Person.select_one(12345) is None
 
 

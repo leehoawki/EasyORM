@@ -83,10 +83,14 @@ class Model(dict):
 
     @classmethod
     def select(cls, **kwargs):
-        sql = 'select %s from %s where %s' % (
+        if kwargs:
+            sql = 'select %s from %s where %s' % (
             ",".join(cls.__fields__), cls.__table__, ' and '.join("%s = ?" % x for x, y in kwargs.items()))
-        args = [y for x, y in kwargs.items()]
-        rs = DB.execute(sql, args)
+            args = [y for x, y in kwargs.items()]
+            rs = DB.execute(sql, args)
+        else:
+            sql = 'select %s from %s' % (",".join(cls.__fields__), cls.__table__)
+            rs = DB.execute(sql)
         return [cls(**d) for d in rs]
 
     @classmethod
