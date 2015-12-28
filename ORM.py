@@ -61,7 +61,7 @@ class Model(dict):
         if self.has_key(key):
             return self[key]
         else:
-            return None
+            return ''
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -85,7 +85,7 @@ class Model(dict):
     def select(cls, **kwargs):
         if kwargs:
             sql = 'select %s from %s where %s' % (
-            ",".join(cls.__fields__), cls.__table__, ' and '.join("%s = ?" % x for x, y in kwargs.items()))
+                ",".join(cls.__fields__), cls.__table__, ' and '.join("%s = ?" % x for x, y in kwargs.items()))
             args = [y for x, y in kwargs.items()]
             rs = DB.execute(sql, args)
         else:
