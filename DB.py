@@ -111,7 +111,7 @@ def init(**kwargs):
         password = kwargs.get("password")
         dbname = kwargs.get("dbname")
         pool = Pool(lambda: Connection(
-            mysql.connector.connect(user=username, password=password, database=dbname, host=host, port=port)))
+                mysql.connector.connect(user=username, password=password, database=dbname, host=host, port=port)))
     else:
         raise Exception("Unsupported database Type : " + database + ".")
 
@@ -167,22 +167,19 @@ class Pool(object):
             c.close()
 
     def get_connection(self):
-        self.lock.acquire()
-        conn = None
-        if self.queue:
-            conn = self.queue.pop()
-        else:
-            conn = self.connector()
-        self.lock.release()
-        return conn
+        with self.lock:
+            if self.queue:
+                conn = self.queue.pop()
+            else:
+                conn = self.connector()
+            return conn
 
     def recycle(self, conn):
-        self.lock.acquire()
-        if len(self.queue) > self.number:
-            conn.close()
-        else:
-            self.queue.append(conn)
-        self.lock.release()
+        with self.lock:
+            if len(self.queue) > self.number:
+                conn.close()
+            else:
+                self.queue.append(conn)
 
 
 core = Core()
