@@ -94,6 +94,18 @@ class Model(dict):
         return [cls(**d) for d in rs]
 
     @classmethod
+    def count(cls, **kwargs):
+        if kwargs:
+            sql = 'select count(1) from %s where %s' % (
+                cls.__table__, ' and '.join("%s = ?" % x for x, y in kwargs.items()))
+            args = [y for x, y in kwargs.items()]
+            rs = DB.execute(sql, args, one=True)
+        else:
+            sql = 'select count(1) from %s' % cls.__table__
+            rs = DB.execute(sql, one=True)
+        return rs.values()[0]
+
+    @classmethod
     def select_one(cls, val):
         r = DB.execute(cls.__select_one_sql__, [val], one=True)
         return cls(**r) if r else None

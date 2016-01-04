@@ -41,6 +41,20 @@ class ORMTest(unittest.TestCase):
         assert len(Person.select()) == 0
         assert Person.select_one(12345) is None
 
+    @DB.transaction
+    def test_group_function(self):
+        assert Person.count() == 0
+        u1 = Person(id=0, name='Michael', email='test@orm.org', passwd='my-pwd')
+        u1.insert()
+        assert Person.count() == 1
+        assert Person.count(id=1) == 0
+        assert Person.count(id=0) == 1
+        u2 = Person(id=1, name='Michael', email='test@orm.org', passwd='my-pwd')
+        u2.insert()
+        assert Person.count() == 2
+        assert Person.count(id=1) == 1
+        assert Person.count(id=0) == 1
+
 
 if __name__ == '__main__':
     unittest.main()
