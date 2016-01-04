@@ -9,10 +9,10 @@ class Field(object):
         self.pk = kwargs.get("pk", False)
 
     def __str__(self):
-        s = '<%s:%s' % (self.__class__.__name__, self.name)
+        s = "<%s:%s" % (self.__class__.__name__, self.name)
         if self.pk:
-            s += ':Primary Key'
-        s += '>'
+            s += ":Primary Key"
+        s += ">"
         return s
 
 
@@ -30,7 +30,7 @@ class NumberField(Field):
 
 class Meta(type):
     def __new__(cls, name, bases, attrs):
-        if name == 'Model':
+        if name == "Model":
             return super(Meta, cls).__new__(cls, name, bases, attrs)
 
         mappings = {}
@@ -40,25 +40,25 @@ class Meta(type):
             if isinstance(v, Field):
                 if v.pk:
                     if pk:
-                        raise Exception('You can not define more than 1 primary key in Class: %s' % name)
+                        raise Exception("You can not define more than 1 primary key in Class: %s" % name)
                     else:
                         pk = v
                 mappings[v.name] = v
                 attrs.pop(k)
         if not pk:
-            raise Exception('You need to define 1 primary key in Class: %s' % name)
+            raise Exception("You need to define 1 primary key in Class: %s" % name)
         for k, v in mappings.items():
             fields.append(k)
-        attrs['__mappings__'] = mappings
-        attrs['__table__'] = name
-        attrs['__fields__'] = fields
-        attrs['__pk__'] = pk
-        attrs['__insert_sql__'] = 'insert into %s (%s) values (%s)' % (
-            name, ','.join(fields), ','.join(['?'] * len(fields)))
-        attrs['__update_sql__'] = 'update %s set %s  where %s = %s' % (
-            name, ','.join('%s = ?' % x for x in fields if x != pk.name), pk.name, '?')
-        attrs['__delete_sql__'] = 'delete from %s where %s = %s' % (name, pk.name, '?')
-        attrs['__select_one_sql__'] = 'select %s from %s where %s = %s' % (",".join(fields), name, pk.name, '?')
+        attrs["__mappings__"] = mappings
+        attrs["__table__"] = name
+        attrs["__fields__"] = fields
+        attrs["__pk__"] = pk
+        attrs["__insert_sql__"] = "insert into %s (%s) values (%s)" % (
+            name, ",".join(fields), ",".join(["?"] * len(fields)))
+        attrs["__update_sql__"] = "update %s set %s  where %s = %s" % (
+            name, ",".join("%s = ?" % x for x in fields if x != pk.name), pk.name, "?")
+        attrs["__delete_sql__"] = "delete from %s where %s = %s" % (name, pk.name, "?")
+        attrs["__select_one_sql__"] = "select %s from %s where %s = %s" % (",".join(fields), name, pk.name, "?")
         return super(Meta, cls).__new__(cls, name, bases, attrs)
 
 
@@ -98,19 +98,19 @@ class Model(dict):
 
     @classmethod
     def select(cls, where=None, *args):
+        sql = "select %s from %s" % (",".join(cls.__fields__), cls.__table__)
         if where:
-            sql = 'select %s from %s where %s' % (",".join(cls.__fields__), cls.__table__, where)
-        else:
-            sql = 'select %s from %s' % (",".join(cls.__fields__), cls.__table__)
+            sql += " where "
+            sql += where
         rs = DB.execute(sql, *args)
         return [cls(**d) for d in rs]
 
     @classmethod
     def count(cls, where=None, *args):
+        sql = "select count(1) from %s" % cls.__table__
         if where:
-            sql = 'select count(1) from %s where %s' % (cls.__table__, where)
-        else:
-            sql = 'select count(1) from %s' % cls.__table__
+            sql += " where "
+            sql += where
         rs = DB.execute_query_one(sql, *args)
         return rs.values()[0]
 
