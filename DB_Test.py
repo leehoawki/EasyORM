@@ -27,7 +27,7 @@ class DBTest(unittest.TestCase):
             test_rollback()
         except:
             ex = True
-        assert ex == True
+        assert ex
         assert len(DB.execute("select * from test where id = 1")) == 1
         assert len(DB.execute("select * from test where id = 2")) == 0
 

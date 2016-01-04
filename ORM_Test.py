@@ -5,10 +5,10 @@ import unittest
 
 
 class Person(Model):
-    id = Field("id", pk=True)
-    name = Field("name")
-    email = Field("email")
-    passwd = Field("passwd")
+    id = NumberField("id", pk=True)
+    name = StringField("name")
+    email = StringField("email")
+    passwd = StringField("passwd")
 
 
 class ORMTest(unittest.TestCase):
@@ -54,6 +54,14 @@ class ORMTest(unittest.TestCase):
         assert Person.count() == 2
         assert Person.count(id=1) == 1
         assert Person.count(id=0) == 1
+
+    @DB.transaction
+    def test_default_value(self):
+        u = Person(email='test@orm.org', passwd='my-pwd')
+        u.insert()
+        v = Person.select_one(0)
+        assert v.id == 0
+        assert v.name == ""
 
 
 if __name__ == '__main__':

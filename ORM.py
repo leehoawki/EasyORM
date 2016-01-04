@@ -2,11 +2,11 @@ import DB
 
 
 class Field(object):
-    def __init__(self, name, pk=False):
+    def __init__(self, name, **kwargs):
         if not name:
             raise Exception("Empty field name is not allowed.")
         self.name = name
-        self.pk = pk
+        self.pk = kwargs.get("pk", False)
 
     def __str__(self):
         s = '<%s:%s' % (self.__class__.__name__, self.name)
@@ -14,6 +14,18 @@ class Field(object):
             s += ':Primary Key'
         s += '>'
         return s
+
+
+class StringField(Field):
+    def __init__(self, name, **kwargs):
+        self.default = ""
+        super(StringField, self).__init__(name, **kwargs)
+
+
+class NumberField(Field):
+    def __init__(self, name, **kwargs):
+        self.default = 0
+        super(NumberField, self).__init__(name, **kwargs)
 
 
 class Meta(type):
@@ -37,7 +49,6 @@ class Meta(type):
             raise Exception('You need to define 1 primary key in Class: %s' % name)
         for k, v in mappings.items():
             fields.append(k)
-
         attrs['__mappings__'] = mappings
         attrs['__table__'] = name
         attrs['__fields__'] = fields
@@ -58,10 +69,10 @@ class Model(dict):
         super(Model, self).__init__(*args, **kwargs)
 
     def __getattr__(self, key):
-        if self.has_key(key):
+        try:
             return self[key]
-        else:
-            return ''
+        except KeyError:
+            raise Exception("This attribute %s is not found " % key)
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -69,7 +80,11 @@ class Model(dict):
     def attributes(self):
         args = []
         for k, v in self.__mappings__.items():
-            args.append(self.__getattr__(k))
+            if hasattr(self, k):
+                arg = getattr(self, k)
+            else:
+                arg = v.default
+            args.append(arg)
         return args
 
     def insert(self):
