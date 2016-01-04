@@ -148,6 +148,10 @@ def execute(sql, args=[], one=False):
             conn.close()
 
 
+def execute_query_one(sql, args=[]):
+    return execute(sql, args, one=True)
+
+
 class Core(threading.local):
     def __init__(self):
         self.connection = None
