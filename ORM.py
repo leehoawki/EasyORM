@@ -94,7 +94,7 @@ class Model(dict):
         DB.execute(self.__update_sql__, *self.attributes())
 
     def delete(self):
-        DB.execute(self.__delete_sql__, *[self.get(self.__pk__.name)])
+        DB.execute(self.__delete_sql__, self.get(self.__pk__.name))
 
     @classmethod
     def select(cls, where=None, *args):
