@@ -88,39 +88,33 @@ class Model(dict):
         return args
 
     def insert(self):
-        DB.execute(self.__insert_sql__, self.attributes())
+        DB.execute(self.__insert_sql__, *self.attributes())
 
     def update(self):
-        DB.execute(self.__update_sql__, self.attributes())
+        DB.execute(self.__update_sql__, *self.attributes())
 
     def delete(self):
-        DB.execute(self.__delete_sql__, [self.get(self.__pk__.name)])
+        DB.execute(self.__delete_sql__, *[self.get(self.__pk__.name)])
 
     @classmethod
-    def select(cls, **kwargs):
-        if kwargs:
-            sql = 'select %s from %s where %s' % (
-                ",".join(cls.__fields__), cls.__table__, ' and '.join("%s = ?" % x for x, y in kwargs.items()))
-            args = [y for x, y in kwargs.items()]
-            rs = DB.execute(sql, args)
+    def select(cls, where=None, *args):
+        if where:
+            sql = 'select %s from %s where %s' % (",".join(cls.__fields__), cls.__table__, where)
         else:
             sql = 'select %s from %s' % (",".join(cls.__fields__), cls.__table__)
-            rs = DB.execute(sql)
+        rs = DB.execute(sql, *args)
         return [cls(**d) for d in rs]
 
     @classmethod
-    def count(cls, **kwargs):
-        if kwargs:
-            sql = 'select count(1) from %s where %s' % (
-                cls.__table__, ' and '.join("%s = ?" % x for x, y in kwargs.items()))
-            args = [y for x, y in kwargs.items()]
-            rs = DB.execute_query_one(sql, args)
+    def count(cls, where=None, *args):
+        if where:
+            sql = 'select count(1) from %s where %s' % (cls.__table__, where)
         else:
             sql = 'select count(1) from %s' % cls.__table__
-            rs = DB.execute_query_one(sql)
+        rs = DB.execute_query_one(sql, *args)
         return rs.values()[0]
 
     @classmethod
     def select_one(cls, val):
-        r = DB.execute_query_one(cls.__select_one_sql__, [val])
+        r = DB.execute_query_one(cls.__select_one_sql__, val)
         return cls(**r) if r else None

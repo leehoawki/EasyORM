@@ -13,16 +13,23 @@ The EasyORM Database Object Relationship Mapping Framework allows you to manipul
     
     @DB.transaction
     def test():
-        Person.select(id=12345))
+        Person.select("id=12345"))
+        Person.select("id=?",12345))
         Person.select_one(12345)
         u = Person(id=12345, name='Mr.Test', email='test@test.org', passwd='test_password')
         u.insert()
-        u.passwd = "WhatTheFuck"
+        u.passwd = "new_password2"
         u.update()
-        Person.select(passwd="WhatTheFuck")
+        Person.select("passwd like '%password'")
         Person.delete(u)
   
     DB.destroy()
     # Pool destroyed
-    
+
+Groups functions are also supported,
+
+    Person.count("name like 'Mr%'")
+    Person.count("id=12345")
+    Person.count("id>10000 and id<20000")
+
 More Features are comming...

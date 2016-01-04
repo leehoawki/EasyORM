@@ -123,7 +123,7 @@ def destroy():
 
 
 @logger
-def execute(sql, args=[], one=False):
+def _execute(sql, one, *args):
     global core
     temp = False
     if core.connection is None:
@@ -148,8 +148,12 @@ def execute(sql, args=[], one=False):
             conn.close()
 
 
-def execute_query_one(sql, args=[]):
-    return execute(sql, args, one=True)
+def execute(sql, *args):
+    return _execute(sql, False, *args)
+
+
+def execute_query_one(sql, *args):
+    return _execute(sql, True, *args)
 
 
 class Core(threading.local):
