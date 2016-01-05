@@ -4,11 +4,11 @@ import inspect
 import time
 import logging
 import threading
-from functools import wraps
+import functools
 
 
 def logger(fn):
-    @wraps(fn)
+    @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         logging.debug("function   = " + fn.__name__)
         logging.debug("    arguments = {0} {1}".format(args, kwargs))
