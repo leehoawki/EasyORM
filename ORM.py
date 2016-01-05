@@ -28,6 +28,12 @@ class NumberField(Field):
         super(NumberField, self).__init__(name, **kwargs)
 
 
+class BooleanField(Field):
+    def __init__(self, name, **kwargs):
+        self.default = False
+        super(BooleanField, self).__init__(name, **kwargs)
+
+
 class Meta(type):
     def __new__(cls, name, bases, attrs):
         if name == "Model":

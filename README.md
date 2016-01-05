@@ -3,10 +3,10 @@
 The EasyORM Database Object Relationship Mapping Framework allows you to manipulate objects without SQL and manage transactions using decorator,
 
     class Person(Model):
-        id = Field("id", pk=True)
-        name = Field("name")
-        email = Field("email")
-        passwd = Field("passwd")
+        id = NumberField("id", pk=True)
+        name = StringField("name")
+        email = StringField("email")
+        passwd = StringField("passwd")
     
     DB.init(database="mysql", host="127.0.0.1", username="root", password="toor", dbname='test', port=3306) 
     # Pool is created when initialized. sqlite3 is also supported

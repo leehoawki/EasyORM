@@ -9,6 +9,7 @@ class Person(Model):
     name = StringField("name")
     email = StringField("email")
     passwd = StringField("passwd")
+    online = BooleanField("online")
 
 
 class ORMTest(unittest.TestCase):
@@ -16,7 +17,7 @@ class ORMTest(unittest.TestCase):
         logging.basicConfig(level=logging.DEBUG)
         DB.init(database='sqlite3', path='test.db')
         DB.execute('drop table if exists Person')
-        DB.execute('create table Person (id int primary key, name text, email text, passwd text)')
+        DB.execute('create table Person (id int primary key, name text, email text, passwd text,online bool)')
 
     def tearDown(self):
         DB.execute('drop table if exists Person')
@@ -26,7 +27,7 @@ class ORMTest(unittest.TestCase):
     def test_person(self):
         assert len(Person.select("id=12345")) == 0
         assert Person.select_one(12345) is None
-        u = Person(id=12345, name='Michael', email='test@orm.org', passwd='my-pwd')
+        u = Person(id=12345, name='Michael', email='test@orm.org', passwd='my-pwd', online=True)
         u.insert()
         assert len(Person.select("id=?", 12345)) == 1
         assert Person.select_one(12345) == u
@@ -44,12 +45,12 @@ class ORMTest(unittest.TestCase):
     @DB.transaction
     def test_group_function(self):
         assert Person.count() == 0
-        u1 = Person(id=0, name='Michael', email='test@orm.org', passwd='my-pwd')
+        u1 = Person(id=0, name='Michael', email='test@orm.org', passwd='my-pwd', online=True)
         u1.insert()
         assert Person.count() == 1
         assert Person.count("id=1") == 0
         assert Person.count("id=0") == 1
-        u2 = Person(id=1, name='Tom', email='test@orm.org', passwd='my-pwd')
+        u2 = Person(id=1, name='Tom', email='test@orm.org', passwd='my-pwd', online=True)
         u2.insert()
         assert Person.count() == 2
         assert Person.count("id=1") == 1
@@ -69,6 +70,11 @@ class ORMTest(unittest.TestCase):
         v = Person.select_one(0)
         assert v.id == 0
         assert v.name == ""
+        assert not v.online
+        v.online = True
+        v.update()
+        w = Person.select_one(0)
+        assert w.online
 
 
 if __name__ == '__main__':
