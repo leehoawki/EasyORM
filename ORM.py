@@ -1,10 +1,14 @@
 import DB
 
 
+class ORMException(Exception):
+    pass
+
+
 class Field(object):
     def __init__(self, name, **kwargs):
         if not name:
-            raise Exception("Empty field name is not allowed.")
+            raise ORMException("Empty field name is not allowed.")
         self.name = name
         self.pk = kwargs.get("pk", False)
 
@@ -46,13 +50,13 @@ class Meta(type):
             if isinstance(v, Field):
                 if v.pk:
                     if pk:
-                        raise Exception("You can not define more than 1 primary key in Class: %s" % name)
+                        raise ORMException("You can not define more than 1 primary key in Class: %s" % name)
                     else:
                         pk = v
                 mappings[v.name] = v
                 attrs.pop(k)
         if not pk:
-            raise Exception("You need to define 1 primary key in Class: %s" % name)
+            raise ORMException("You need to define 1 primary key in Class: %s" % name)
         for k, v in mappings.items():
             fields.append(k)
         attrs["__mappings__"] = mappings
@@ -78,7 +82,7 @@ class Model(dict):
         try:
             return self[key]
         except KeyError:
-            raise Exception("This attribute %s is not found " % key)
+            raise ORMException("This attribute %s is not found " % key)
 
     def __setattr__(self, key, value):
         self[key] = value

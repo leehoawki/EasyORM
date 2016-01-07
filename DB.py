@@ -7,6 +7,10 @@ import threading
 import functools
 
 
+class DBException(Exception):
+    pass
+
+
 def logger(fn):
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
@@ -24,7 +28,7 @@ def logger(fn):
 
 
 def transaction(fn):
-    @wraps(fn)
+    @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         with _TransactionCtx():
             return fn(*args, **kwargs)
@@ -92,14 +96,14 @@ class Connection(object):
 def get_connection():
     global pool
     if pool is None:
-        raise Exception("DB needs to get initialized first.")
+        raise DBException("DB needs to get initialized first.")
     return pool.get_connection()
 
 
 def init(**kwargs):
     global pool
     if pool is not None:
-        raise Exception("DB can only not initialized once.")
+        raise DBException("DB can only not initialized once.")
     database = kwargs.get("database")
     if database == "sqlite3":
         path = kwargs.get("path")
@@ -113,7 +117,7 @@ def init(**kwargs):
         pool = Pool(lambda: Connection(
                 mysql.connector.connect(user=username, password=password, database=dbname, host=host, port=port)))
     else:
-        raise Exception("Unsupported database Type : " + database + ".")
+        raise DBException("Unsupported database Type : " + database + ".")
 
 
 def destroy():
