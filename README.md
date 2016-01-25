@@ -13,8 +13,8 @@ The EasyORM Database Object Relationship Mapping Framework allows you to manipul
     
     @DB.transaction
     def test():
-        Person.select("id=12345"))
-        Person.select("id=?",12345))
+        Person.select("id=12345")
+        Person.select("id=?",12345)
         Person.select_one(12345)
         u = Person(id=12345, name='Mr.Test', email='test@test.org', passwd='test_password')
         u.insert()
