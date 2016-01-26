@@ -32,7 +32,6 @@ def transaction(fn):
     def wrapper(*args, **kwargs):
         with _TransactionCtx():
             return fn(*args, **kwargs)
-        return result
 
     return wrapper
 
@@ -162,6 +161,7 @@ def execute_query_one(sql, *args):
 
 class Core(threading.local):
     def __init__(self):
+        super(Core, self).__init__()
         self.connection = None
 
 
